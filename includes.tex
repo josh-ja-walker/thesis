@@ -51,8 +51,25 @@
 
 \usepackage[all]{hypcap}
 
+\usepackage{xcolor}
+\definecolor{codegrey}{rgb}{0.5,0.5,0.5}
 
-%\usepackage{color}
+\usepackage{listings} % use code
+\lstdefinestyle{codestyle}{
+  commentstyle=\color{codegrey},
+  basicstyle=\sffamily\footnotesize,
+  breakatwhitespace=false,         
+  breaklines=true,                 
+  captionpos=b,                    
+  showspaces=false,                
+  showstringspaces=false,
+  showtabs=false,                  
+  tabsize=2,
+  % Render arrow to show line wrapping
+  postbreak=\raisebox{0em}[0em][0em]{\qquad\scriptsize\color{codegrey}\ensuremath{\drsh}\ }
+}
+\lstset{style=codestyle}
+  
 %\usepackage[tight,ugly]{units}
 \usepackage{float}
 %\usepackage{tcolorbox}
