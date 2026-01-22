@@ -21,21 +21,21 @@
 \usepackage{titlesec}
 \usepackage{lipsum}
 \usepackage{textpos}
-\usepackage[super]{natbib} % bibliography with superscript citations
 \usepackage{tabularx,longtable,multirow,subfigure,caption}%hangcaption
 \usepackage{fncylab} %formatting of labels
 \usepackage{fancyhdr} % page layout
 \usepackage{url} % URLs
 \usepackage[english]{babel}
+\usepackage{csquotes}
 \usepackage{amsmath}
 \usepackage{mathabx}
 \usepackage{graphicx}
 \usepackage{dsfont}
+\usepackage{float}
 \usepackage{epstopdf} % automatically replace .eps with .pdf in graphics
-\usepackage{backref} % needed for citations
 \usepackage{array}
 \usepackage{latexsym}
-\usepackage[pdftex,pagebackref,hypertexnames=false,colorlinks]{hyperref} % provide links in pdf
+\usepackage[pdftex,hypertexnames=false,colorlinks]{hyperref} % provide links in pdf
 
 \hypersetup{pdftitle={},
   pdfsubject={}, 
@@ -71,7 +71,6 @@
 \lstset{style=codestyle}
   
 %\usepackage[tight,ugly]{units}
-\usepackage{float}
 %\usepackage{tcolorbox}
 %\usepackage[colorinlistoftodos]{todonotes}
 % \usepackage{ntheorem}
@@ -82,6 +81,9 @@
 % \newtheorem{definition}{Definition}
 % \newtheorem{proof}{Proof}
 
+\usepackage[style=vancouver, autocite=superscript]{biblatex} % bibliography with superscript citations
+\addbibresource{refs.bib}
+% \usepackage[super]{natbib} % bibliography with superscript citations
 
 %%% Default fonts
 \renewcommand*{\rmdefault}{bch}
