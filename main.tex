@@ -1,65 +1,65 @@
 \documentclass[12pt,twoside]{report}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Definitions for the title page
-% Edit these to provide the correct information
-% e.g. \newcommand{\reportauthor}{Timothy Kimber}
-
 \newcommand{\reporttitle}{Ginseng: Staged Metaprogramming Graphics Library}
 \newcommand{\reportauthor}{Joshua Walker}
 \newcommand{\supervisor}{Jamie Willis}
-\newcommand{\degreetype}{Computing MEng}
+\newcommand{\secondmarker}{Tom Crossland}
+\newcommand{\degreetype}{Computing}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% load some definitions and default packages
-\input{includes}
+\input{includes} % load some definitions and default packages
+\input{notation} % load some macros
 
-% load some macros
-\input{notation}
-
-\date{June 2026}
+\date{\today}
 
 \begin{document}
 
-% load title page
-\input{titlepage} 
-
+\input{titlepage} % load title page
 
 % page numbering etc.
 \pagenumbering{roman}
-\clearpage{\pagestyle{empty}\cleardoublepage}
+\clearpage{\pagestyle{headings}\cleardoublepage}
 \setcounter{page}{1}
 \pagestyle{fancy}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \begin{abstract}
 
 Abstract here.
 
 \end{abstract}
 
-\cleardoublepage
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section*{Acknowledgments}
-Comment this out if not needed.
+\clearpage
 
-\clearpage{\pagestyle{empty}\cleardoublepage}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\vspace*{0.275\textheight}{\centering{\large\bfseries Acknowledgments}\\[1em]}
+Acknowledgments here.
+  
+\clearpage
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %--- table of contents
 \fancyhead[RE,LO]{\sffamily {Table of Contents}}
-\tableofcontents 
+\tableofcontents
 
 
-\clearpage{\pagestyle{empty}\cleardoublepage}
+\clearpage{\pagestyle{headings}\cleardoublepage}
 \pagenumbering{arabic}
 \setcounter{page}{1}
 \fancyhead[LE,RO]{\slshape \rightmark}
 \fancyhead[LO,RE]{\slshape \leftmark}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \chapter{Introduction}
 
 \begin{figure}[tb]
