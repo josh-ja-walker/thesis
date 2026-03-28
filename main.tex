@@ -38,8 +38,11 @@ Abstract here.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\vspace*{0.275\textheight}{\centering{\large\bfseries Acknowledgments}\\[1em]}
-Acknowledgments here.
+% TODO: define acknowledgements environment
+% \begin{acknowledgements}
+  \vspace*{0.275\textheight}{\centering{\large\bfseries Acknowledgments}\\[1em]}
+  To Jamie and Tom, my thanks and apologies for reading all of this.
+% \end{acknowledgements}
   
 \clearpage
 
@@ -62,29 +65,410 @@ Acknowledgments here.
 
 \chapter{Introduction}
 
-\begin{figure}[tb]
-\centering
-\includegraphics[width = 0.4\hsize]{./figures/imperial}
-\caption{Imperial College Logo. It's nice blue, and the font is quite stylish. But you can choose a different one if you don't like it.}
-\label{fig:logo}
-\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Figure~\ref{fig:logo} is an example of a figure. 
+\section{Problem} % What is the problem? Why is it interesting?
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Modern graphics libraries are trending towards providing lower level APIs for more exacting control over the GPU hardware with the advent of photorealistic graphics and need for highly performant systems. \autocite{khronosgroup_vulkan_2023} The skill required by graphics programmers is steadily increasing, outstripping any modernisation efforts made for the development environment. Programming concerns are not separated; without domain-specific knowledge being utilised to make assumptions about the environment, a developer has full control over the hardware, at the cost of reimplementing many of the programs classically handled by operating software drivers.
+
+\section{Project Plan}
+
+To reduce the cognitive load upon technical artists, I will define a domain-specific language to simplify the classical model of a graphics API; this involves making assumptions about the domain in order to abstract out lower-level functionality -- for example, this may mean limiting the environment to utilise 2D primitives, simplifying shader definition or rendering static scenes without the support of input handling. This is to build a library used for scene synthesis and as such may require dismissing concerns related to more advanced graphics rendering techniques such as animation.
+
+Developing a graphics library in this way allows me to bake in type-safe guarantees with the design of my domain-specific language; conversely, most modern graphics APIs are designed using an unsafe and unprincipled imperative state machine, which requires careful consideration and frustrates debugging attempts. This DSL has the ability to provide a compromise between imperative paradigms and declarative one -- abstracting out state dynamics allows for declarative scene declaration, whilst providing access to lower-level imperative methods to define dynamics of the underlying renderer. 
+
+An interpreter is built upon the domain specific language, expanding terms into their constituent graphics API bindings. Performance concerns may arise due to exhaustive process of expanding each declared domain-specific primitive composing each scene object into their corresponding underlying graphics primitive. To alleviate this bottleneck, staged metaprogramming can be employed to abstract large sections of interpreted code into a tailored elimination of redundancies and eliminate the overhead of pipelined interpretation. As the scene is statically known, a large degree of knowledge pertaining to the final render is available to the interpreter, which can be used to perform optimising techniques that are infeasible when operating within an state-driven imperative language -- i.e., wholesale vertex batching, reduction of drawing mode modifications, etc. 
+
+Some further improvements may then expand upon the domain specific language -- as a proof of concept, it may initially be very simple or restrictive. To allow programmers a larger degree of freedom, I could extend the DSL, for example, from 2D to encapsulate 3D objects or support animation or complex shading. 
+
+\subsection{Project Timeline}
+
+A basic timeline for the project will be as follows:
+
+\begin{itemize}[topsep=0px,parsep=0px]
+  \item \textbf{December -- Early Jan}: Research low-level graphics APIs, example domain specific languages and staged metaprogramming.
+  \item \textbf{Jan -- Early Feb}: Develop DSL representations of 2D geometry; define combinatorial logic allowing them to be composed in relation to their position and geometry.
+  \item \textbf{Feb -- March}: Develop an interpreter to convert the embedded DSL into low-level graphics API code.
+  \item \textbf{March}: Refine DSL representation.  
+  \item \textbf{Late March -- April}: Begin staging common code, transforming interpreter into a compiler.
+  \item \textbf{Late April -- June}: Extend DSL to provide support for complex shading, 3D geometry, animation, etc.,. 
+  \item \textbf{April -- June}: Document project achievements in final draft of report.  
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% TODO: 
+% \section{Contributions} % I do not know
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \chapter{Background}
 
+This section aims to give sufficient background on principled staged metaprogramming and computer graphics in order to provide foundations for understanding methods discussed in this thesis.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Contribution}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Domain Specific Languages} % Overview of DSLs
+
+General-purpose programming languages like Scala, Haskell, and C are designed for wide-ranging applications; this may have the negative side-effect of bringing into focus many solutions to a single problem. The resulting tension motivates the need for a \textit{domain specific language} (DSL), in which a language is specialised to a paradigm, such as SQL for database management, MATLAB for matrix programming, YACC for developing parsers, etc.,. These languages have programmatical structures designed for this application, with domain-specific assumptions being made to facilitate development.
+
+Domain-specific languages take a variety of semantic and syntactical forms; they can be divided into two categories -- \textit{standalone} or \textit{embedded}. Standalone DSLs have a wide degree of freedom to redefine their syntax and semantics as they are hosted externally with a newly defined toolkit (compiler, debugger, etc.). Embedded domain specific languages are hosted \textit{within a GPL}; they can be thought of as a set of definitions within the host language, or a stylized use of the language for a domain-specific purpose. \autocite{martin_fowler_domain_2010}
+
+\subsection{Deep and Shallow Embeddings}
+
+There is no standard method of embedding a DSL; however, the notion of the depth of an embedding is used to further categorize embedded DSLs into \textit{shallow} and \textit{deep} embeddings. With a \textit{shallow embedding}, terms within the DSL are simply constructed as an implementation of their semantics; conversely, the semantics of a deeply embedded DSL are affected through the evaluation of an internal abstract syntax tree (AST), subject to optimisation. \autocite{gibbons_folding_2014}
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Experimental Results}
+\subsection{Bindings}
+
+A \textit{binding} is an application programming interface (API) that provides access to a library from within its non-native programming language. Bindings can either be \textit{direct} -- i.e., a syntactic mapping from one language to another, preserving naming schemes and structures -- or \textit{abstract}, in which the semantics of the library are best replicated in the target language. \autocite{david_emery_standards_2015} 
+
+A common use-case for bindings is accessing the wealth of C libraries; the C header system provides publicly accessible functions and type definitions, and as such is a valuable resource automating binding generation. As noted in the following sections, many graphics libraries are specified using C as a standard; in this case, bindings will be required to access the library within Scala.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Staged Metaprogramming} % Overview of techniques involved in staged metaprogramming
+
+Metaprogramming is a method of manipulating code as a first-class value: code is constructed using regular language syntax, enclosed within the \textit{quote} syntax (\([|~...~|]\) in Haskell; \verb|'{ ... }| in Scala). The converse operator is \textit{splice}, which evaluates quoted code and inserts the result into the program (\verb|$| in both Haskell and Scala).
+
+% TODO: fix Haskell verb quoting
+
+Staging is a method in which the programmer identifies statically-known sections of a program and utilises metaprogramming to perform the computation ahead of runtime. The traditional example of two-stage metaprogramming and its utilisation is in redefining the \verb|power n x| function for calculating \(x^n\):
+
+\begin{minipage}{.5\textwidth}
+  \lstinputlisting[language=Haskell, label=lst:power, caption=Classical power function \autocite{willis_staged_2020}]{code/Power.hs}
+\end{minipage}
+~
+\begin{minipage}{.5\textwidth}
+  \lstinputlisting[language=Haskell, label=lst:staged-power, caption=Staged power function \autocite{willis_staged_2020}]{code/StagedPower.hs}
+\end{minipage}
+
+As such, when executed, the staged power function evaluates to the following code:
+
+\lstinputlisting[language=Haskell, label=lst:eval-staged-power, caption=Evaluated staged power function \autocite{willis_staged_2020}]{code/EvalStagedPower.hs}
+
+Multiple stages arise when higher-level abstractions cannot be eliminated using a single application of the quote and splice primitives; to expose larger degrees of static information, a program can be converted into a syntactic representation at an initial stage. At later stages, this representation is evaluated using the wider syntactic context to infer greater meaning. \autocite{pickering_multi-stage_2019}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Computer Graphics} % Overview of graphics rendering pipeline, etc.
+
+Computer graphics is an an area of computer science focused on the technical aspects involved in ensuring visual content such as art, image and film is meaningfully visible to a consumer. Sub-fields include image processing, rendering and visual content manipulation. 
+
+This thesis will focus on the rendering of images to screen, typically in the example of personal computers and games consoles responsible for displaying high-definition scenes synthesized by technical artists.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Graphics Pipeline}
+
+The classical model of a graphics render pipeline consists of three major stages: \textbf{application}, \textbf{geometry}, \textbf{rasterisation}. Figure~\ref{fig:render-pipeline} is an example of render pipeline. \autocite{tomas_akenine-moller_real-time_2008}
+
+% TODO: check copyright 
+\begin{figure}[h] 
+  \centering
+  \includegraphics[width = 0.4\hsize]{./figures/render-pipeline.png}
+  \caption{The graphics render pipeline divided into major stages \autocite{tomas_akenine-moller_real-time_2008}}
+  \label{fig:render-pipeline}
+\end{figure}
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Conclusion}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection{Application}
+
+This stage is driven by the underlying application; executed on a general purpose CPU, it modifies the original scene according to software managed by a developer with full control over the implementation. Some operations typically performed during this stage include physics simulation, collision detection, input handling, etc.
+
+At the end of this application stage, the scene data is forwarded to the geometry stage in the form of rendering primitives: triangles, points, lines, etc., that constitute the final scene.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection{Geometry}
+
+The geometry stage performs the majority of per-polygon and per-vertex operations; this stage can be further delineated into the \textbf{model and view transformation}, \textbf{vertex shading}, \textbf{projection}, \textbf{clipping} and \textbf{screen mapping} stages as shown in Figure~\ref{fig:geometry-stage}.
+
+% TODO: check copyright 
+\begin{figure}[h]
+  \centering
+  \includegraphics[width = 0.4\hsize]{./figures/geometry-stage.png}
+  \caption{The geometry stage divided into sub-stages \autocite{tomas_akenine-moller_real-time_2008}}
+  \label{fig:geometry-stage}
+\end{figure}
+
+\subparagraph{Model and View Transform}
+
+Scene data must be understood in relation to a user-defined virtual camera, indicating the position and viewing direction from which the scene is to be rendered. This gives graphics primitives and their position meaning.
+
+Each model resides in its own \textit{model space}, untransformed and without relation to a viewer or the scene. Each model is associated with a \textit{model transform} matrix to reposition and orientate the model within the scene at \textit{world space coordinates}. Many different model transformations can be applied to the same model, resulting in differing copies (called \textit{instances}) of the model in the same scene.
+
+To perform simpler clipping and projection operations at later stages within the geometry pipeline, the scene is transformed by the \textit{view transform} matrix such that the viewer is positioned at the origin, orientated such that it aims along the \(-z\) axis (this is by convention -- some texts prefer to use the \(+z\) axis). This view transform is applied to all models and the camera, transforming the world space into the \textit{camera space}.
+
+% TODO: check copyright 
+\begin{figure}[h] 
+  \centering
+  \includegraphics[width = 0.4\hsize]{./figures/view-transformation.png}
+  \caption{The view transformation \autocite{tomas_akenine-moller_real-time_2008}}
+  \label{fig:view-transformation}
+\end{figure}
+
+
+\subparagraph{Vertex Shading}
+
+To produce a realistic scene, models are illuminated by light sources placed in the scene. At each vertex, the illumination from the sources is computed in accordance with the material values ascribed to the model. The material determines the reflectivity of the model, colour, etc., and can be used in conjunction with texture mapping to create photorealistic models. These computed shaded vertex values are sent to the per-pixel rasterisation stage for interpolation.
+
+
+\subparagraph{Projection}
+
+The view space is then transformed into a \textit{canonical view volume} -- there are two commonly used projections: \textit{perspective} and \textit{orthographic}.
+
+The \textbf{orthographic projection} transforms the camera space into a unit cube, with extremities at \((1, 1, 1)\) and \((-1, -1, -1)\). This projection maintains parallelism of lives throughout the transformation.
+
+The \textbf{perspective projection} is more complex, transforming the camera space into a \textit{frustum} -- a truncated pyramid with a rectangular base. This projection does not maintain parallel lines, mimicking the change in size of objects further from the camera by scaling them accordingly.
+
+% TODO: check copyright 
+\begin{figure}[h] 
+  \centering
+  \includegraphics[width = 0.4\hsize]{./figures/projection.png}
+  \caption{Orthographic projection (left) compared with perspective projection (right) \autocite{tomas_akenine-moller_real-time_2008}}
+  \label{fig:projection}
+\end{figure}
+
+Regardless of the projection used, this is a distinct mathematical operation from transformation as (despite maintaining a \(z\)-axis temporarily for rasterizing) the \(z\) coordinate is disregarded and the model is projected from three to two dimensions.
+
+
+\subparagraph{Clipping}
+
+For performance, only primitives that are within the visible volume defined by the previous projection stage need to be passed to the rasteriser. Primitives contained within the viewing volume are unmodified; primitives that are fully occluded from the view are removed; primitives that are partially within the view volume require \textit{clipping}. This process involves computing the intersection of the view volume boundaries and the line between vertices and replacing the clipped vertex with intersection point. This utilises the benefit of the consistent transformation to a unit view volume to standardise the clipping operation.
+
+% TODO: check copyright 
+\begin{figure}[h] 
+  \centering
+  \includegraphics[width = 0.4\hsize]{./figures/clipping.png}
+  \caption{The clipping operation performed on a sample scene \autocite{tomas_akenine-moller_real-time_2008}}
+  \label{fig:clipping}
+\end{figure}
+
+
+\subparagraph{Screen Mapping}
+
+The clipped primitives still maintain their three-dimensional form despite the previous projection stage. The \(x\) and \(y\) coordinates are transformed into \textit{screen coordinates}; the \(x\), \(y\) and \(z\) coordinates form the \textit{window coordinates}. By convention, the screen coordinate system has the origin \((0, 0)\) at the \textit{top-left} corner. To map the unit view volume to the screen, a translation followed by a scaling operation is performed.
+
+% TODO: insert screen mapping diagram
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection{Rasterisation}
+
+The rasteriser samples continuous primitives into discrete pixels on the screen. During this stage, raster points are called \textit{fragments} -- this distinguishes between a single pixel on the screen and multiple pixel candidates within the frame buffer. The constituent stages of the rasteriser can be seen in Figure~\ref{fig:rasterise-stage}
+
+% TODO: check copyright
+\begin{figure}[h]
+  \centering
+  \includegraphics[width = 0.4\hsize]{./figures/rasterise-stage.png}
+  \caption{The rasterise stage divided into sub-stages \autocite{tomas_akenine-moller_real-time_2008}}
+  \label{fig:rasterise-stage}
+\end{figure}
+
+Each fragment contained within the triangle has values computed by interpolation between its three defined vertices using \textit{Barycentric} coordinates. \textit{Fragment shading} or pixel shading computation is performed using this interpolated fragment data -- this may include \textit{texturing}, a process in which (typically) two-dimensional images are 'glued' onto the surface of an object.
+
+To render overlapping polygons, the process of \textit{z-buffering} is performed in order to ensure the visibility of the closest polygons to the viewer. This is the reason for screen space primitives maintain their three-dimensional form; during z-buffering, these \(z\)-coordinates determine the closest fragments. The algorithm simply overwrites existing pixel values with any fragments with a smaller \(z\)-coordinate value -- partially transparent primitives must be rendered after all opaque primitives in a back-to-front order.
+
+This scan conversion operation transforms each fragment (or pixel candidate) into a single pixel. To prevent gradual rendering of primitives, once the image is completely rastered, it is copied to the \textit{frame buffer}, a visible area of memory to be displayed on screen.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% TODO:
+% \subsection{Graphical Representations}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% TODO:
+% \subsection{Graphical Applications}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Related Work}
+
+This section studies graphical APIs and libraries to perform rendering and utilising staged metaprogramming  
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Domain Specific Languages}
+
+There exist many examples of domain specific languages -- some relevant to the development of a graphical DSL include: the \textit{Geometric Constructions Language} (GCL)\autocite{janicic_geometry_2010} for explicit description of constructions in the Euclidean plane for use in providing mathematical illustrations and automating geometric proofs ; \textit{Selos} \autocite{seitz_staged_2019} which demonstrates the use of staged metaprogramming techniques within the graphical domain to generate efficient shaders with strong design fundamentals; and a modular declarative JSON-embedded domain-specific language for the specification of 3D visualisation tools \autocite{scholz_modular_2021}.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Graphics APIs and Libraries}
+
+Typical graphics APIs and libraries can be categorised as either \textit{imperative} or \textit{declarative}; i.e., the program either describes \textit{how} a scene is rendered, or \textit{what} should be rendered in the scene. 
+
+This section also makes a further distinction between theoretical API specifications supported by hardware vendors, and practical graphics libraries implemented in code on top of aforementioned APIs.
+
+The following are representative of the industry standard of graphics APIs and libraries; these studies will inform the design methodology used and, furthermore, which should be used as the compile target underscoring the DSL.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{OpenGL}
+
+OpenGL (Open Graphics Library) is a cross-platform specification for a programming interface for the development of 3D graphical applications, allowing developers control over the graphics pipeline as processed by graphics hardware. It is supported by hardware vendors who may define further extensions to the API, and as such is extremely portable -- it is the de facto standard for games development on non-Microsoft platforms such as Sony and Nintendo consoles.\autocite{jr_richard_s_wright_opengl_2010}
+
+OpenGL is an imperative, procedural graphics API; a technical artist will specify the steps necessary to render a scene, not its content. It is designed as a \textit{state machine}, in which drawing commands are parameterised by the currently defined state. Users are not required to consistently redefine variables such as vertex colour or scene lighting as they are persistent until changed. This also has a performance benefit; changes in drawing mode are computationally expensive when repeatedly performed during rendering.
+
+The specification consists of approximately 250 commands used for representing a scene, from defining primitives and their positions to the texturing methods used. It does not include functions to support window management, user interaction or file input/output.
+
+OpenGL is no longer in active development; Khronos Group have begun developing its successor \textit{Vulkan}, which aims to provide developers with more direct control over the GPU.
+
+
+\subsubsection{Primitives and Data Types}
+
+OpenGL defines its own data types to ensure they are portable. Each data type begins with the \verb|GL| prefix and is typically followed by a familiar C data type. Some useful examples are \verb|GLboolean|, \verb|GLuint|, \verb|GLenum|.\autocite{jr_richard_s_wright_opengl_2010}\autocite{mark_segal_opengl_2022}
+
+OpenGL primitives are defined in batches of vertices held in a \textit{vertex buffer object}. The primitive rendered using these vertices is specified using one of the following primitive modes:
+\begin{itemize}
+  \item \verb|GL_POINTS| -- a single vertex on screen with a set diameter, of which the default is 1 pixel.
+  \item \verb|GL_LINES| -- a pair of vertices defines a line segment, hence a batch should contain an equal number of vertices. These lines are 1 pixel in width by default.
+  \item \verb|GL_LINE_STRIP| -- all vertices are connected in series using a 1 pixel wide line.
+  \item \verb|GL_LINE_LOOP| -- all vertices are connected in series, with an additional line connecting the last and first vertices.
+  \item \verb|GL_TRIANGLE| -- each 3 vertices in the batch defines a new triangle.
+  \item \verb|GL_TRIANGLE_STRIP| -- the first 3 vertices define a triangle, with each subsequent vertex defining an additional triangle formed using the previous 2 vertices.
+  \item \verb|GL_TRIANGLE_FAN| -- the first 3 vertices define a triangle, with each subsequent vertex defining an additional triangle formed using the first and previous vertices.
+\end{itemize}
+
+Triangles are the only polygons OpenGL supports; they are the simplest possible polygon and utilised extensively by the rasteriser. When defining a triangle, OpenGL uses the \textit{winding} (i.e., specified order and relative position) of vertices defines its normal: if the vertices of a triangle are defined \textit{counterclockwise}, it is front-facing; otherwise is is backwards-facing. This is important for shading, as different materials may be assigned to the different faces. Textures are also reversed when applied to a back-facing triangle. Note that when drawing triangle strips and fans, the winding of the \textit{first} triangle is used to determine the whether the primitive is front-facing; when drawing independent triangles, the winding is calculated individually for each triangle.
+
+% TODO: check copyright
+\begin{figure}[h]
+  \centering
+  \includegraphics[width = 0.4\hsize]{./figures/primitives-triangle.png}
+  \caption{(a) Triangle strip. (b) Triangle fan. (c) Independent triangles 
+  \autocite{mark_segal_opengl_2022}}
+  \label{fig:primitives-triangles}
+\end{figure}
+
+
+\subsubsection{GLSL}
+
+GLSL (OpenGL Shading Language) is a C-style language used by OpenGL to define vertex, fragment and geometry shaders. It is injected into OpenGL using the \verb|CreateShader|, \verb|ShaderSource| and \verb|ShaderCompile| commands. \autocite{mark_segal_opengl_2022}
+
+Shaders are executed during the render pipeline and define variables with the \verb|in| and \verb|out| keywords for intercommunication between stages -- for example, a vertex colour is typically defined in the vertex shader and consumed by the fragment shader. As the fragment shading is performed after rasterisation, inputted values are interpolated from any variables output by the vertex shader.
+
+
+\subsubsection{GLUT}
+
+GLUT (OpenGL Utility Toolkit) is the commonly used library for platform-agnostic GUI features such as popup menus and window management. It also support user input such as keyboard and joystick support. This helps developers avoid specialising in differing platform-specific GUI stacks. The open-source alternative \textit{freeglut} is widely used. \autocite{mark_segal_opengl_2022}
+
+
+\subsubsection{OpenGL Extensions}
+
+One of the major benefits of OpenGL is its wide compatibility; as hardware developers continue to innovate, they may contribute to the OpenGL API through its extension mechanism. This allows OpenGL to maintain a standard whilst supporting advanced functionality. Each extension method is specified with a prefix, corresponding to the developer; common extension prefixes are \verb|SGI_| (Silicon Graphics), \verb|WGL_| (Microsoft) and \verb|NV_| (NVIDIA). \autocite{mark_segal_opengl_2022}
+
+GLEW (OpenGL Extension Wrangler Library) manages OpenGL extensions, initialising the required function pointers and included required constants, typedefs, etc. as defined by the extension.
+
+GLAD is an alternative to GLEW which generates the required loader files from the specified required extensions -- it is not able to detect extensions used at runtime. This has the benefit of slightly faster compile times and runtime initialization. \autocite{david_herberth_glad_2019}
+
+
+\subsubsection{'Hello Triangle'}
+
+The following program is a program using OpenGL to render the classical \textit{'Hello Triangle'} example scene in which a 2D triangle with Red, Green and Blue vertices is shaded using values interpolated by the rasteriser. \autocite{anton_gerdelan_hello_2025}
+
+\lstinputlisting[language=C++, label=lst:opengl-hello-triangle, caption=OpenGL \textit{'Hello Triangle'} Program\autocite{anton_gerdelan_hello_2025}]{code/OpenGL-Triangle.cpp}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width = 0.4\hsize]{./figures/opengl-triangle.png}
+  \caption{Output of the OpenGL \textit{'Hello Triangle'} Program}
+  \label{fig:opengl-hello-triangle}
+\end{figure}
+
+Many of the difficulties of OpenGL programming can be noted even in this small example: shader type-safety is an impossibility using a \verb|string| representation; initialising a vertex buffer requires several boilerplate OpenGL command calls; the consistent use of constants, enums and bit-flags to modify OpenGL state can be obtuse; and despite utilising the GLAD library, window initialisation is still extensive and verbose.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Vulkan}
+
+Vulkan is the new low-level graphics API currently in development by the Khronos Group, responsible for the development of OpenGL. It aims to improve upon OpenGL, with a focus on minimising the level of abstraction required by the device driver, bringing performance benefits such as lower CPU overhead and memory footprint -- as such, it is more comparable to OpenGL ES, the subset of OpenGL designed for accelerating graphical hardware within embedded systems. \autocite{khronosgroup_vulkan_2023}
+
+Vulkan also utilises more modern ideas of graphics APIs: adopting object-based state management over than monolithic global state; using a multi-threaded rendering model; and separating resources from their underlying physical memory. 
+
+This lower-level specification pushes greater responsibility onto the developers, who will be required to implement much of the memory allocation, sychronisation and thread management previous provided by a more complex GPU driver. In this way, Vulkan can be described as more of a GPU API for more advanced graphics projects with a greater need for optimisation. 
+
+% TODO: note how fucking large the Vulkan solution is for 'Hello Triangle'
+% e.g., "As an exercise in discerning the differences between OpenGL and Vulkan, the ..."
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{DirectX}
+
+The Direct3D graphics API and its accompanying libraries providing support for user input, window management, audio playback, etc., are collectively known as the \textit{DirectX} suite.
+
+% TODO: expand on
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Pixar RenderMan}
+
+In contrast to the above imperative examples, the RenderMan Interface Specification (RISpec) developed by Pixar is an open-source declarative API; technical artists describe a three-dimensional scene and utilise separate rendering software which implements the RenderMan Inteface to produce the scene. This compatibility allows artists to use a wide range of industry-standard renderers such as Maya, Houdini and Blender. \autocite{kesson_pixars_2008, hanrahan_design_2021, raghavachary_brief_2006}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% TODO: another example of a declarative API
+% \subsection{OpenSceneGraph}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Haskell GPipe}
+
+\href{https://hackage.haskell.org/package/GPipe}{GPipe} is a Haskell library providing a functional API for OpenGL 3.3 with the emphasis on  type-safe guarantees. As middleware, GPipe subsumes existing OpenGL bindings with its API to avoid enforcing clunky management of the imperative OpenGL state machine within Haskell's monadic system. As noted in the developer's blog post, maintaining these required invariants could lead to frustrating debugging sessions whilst trying to diagnose runtime crashes. \autocite{tobias_bexelius_gpipe_2015-1}
+
+GPipe provides a strong example of a functional graphics library reducing the complexity of OpenGL and its rendering mechanisms. Below is the \textit{'Hello Triangle'} example rendered using the GPipe library:
+
+\lstinputlisting[language=Haskell, caption=GPipe \textit{'Hello Triangle'} Program
+  \autocite{tobias_bexelius_gpipe_2015}]{code/GPipe-Triangle.hs}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width = 0.4\hsize]{./figures/gpipe-triangle.png}
+  \caption{Output of the GPipe \textit{'Hello Triangle'} Program}
+  \label{fig:gpipe-hello-triangle}
+\end{figure}
+
+Note that in comparison to the example OpenGL code in Listing~\ref{lst:opengl-hello-triangle}, the GPipe example abstracts much of the typical OpenGL boilerplate and provides an in-built functional and type-safe shader system, unlike the competing Haskell graphics library \href{https://hackage.haskell.org/package/luminance}{\textit{luminance}} which utilises GLSL. 
+
+It should also be noted that GPipe maintains the OpenGL mechanism of vertex buffers; according to the developer Tobias, this decision was taken for the release of version 2.0 in response to the "major flaw" of version 1., which automatically converted the standard Haskell lists into vertex buffers and resulted in memory leaks. This alternative provides the user access to the original lower level functionality OpenGL expects at a detriment to the conciseness of the program. \autocite{tobias_bexelius_gpipe_2015}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Evaluation}
+
+The purpose of this thesis is to develop a usable alternative to standard graphics APIs; however, it is infeasible to provide a consistent staged performance benefit without making assumptions about the target domain. During evaluation, I must ensure that the library conforms to user's expectations whilst delivering performance and usability benefits, without the ambition to wholesale replace the inherent performance benefit manipulating direct hardware using low-level APIs. 
+
+\section{Benchmarking}
+
+To quantify the performance benefits wrought by staged metaprogramming techniques, I will benchmark the library against common graphics API and library alternatives generating similarly rendered sample scenes, chosen arbitrarily with a wide range of rendering techniques displayed. It is important to compare both the compilation time and runtime performance, including memory used, presence of any memory leaks, error handling and time taken to render. It is important to note that in comparison to the graphics API which the library will compile to, there may be little to no performance benefit, and will likely have an increased compilation time due to the additional staging. The greater benefits will likely be evident when viewed in comparison to competing graphics libraries which perform interpreting operations to generate API code.
+
+\section{User Testing}
+
+To evaluate qualitative criteria such as ease of use, it is important to aggregate user feedback; in the absence of large groups of graphics programmers to survey, it may be necessary to approximate usability using program complexity metrics such as lines of code, nesting depth, and cyclomatic complexity.\autocite{mccabe_complexity_1976}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Declarations}
+
+The following declarations are made regarding this thesis:
+
+\section{Use of Generative AI}
+
+Generative AI tools were not used at any point during this project; I remain ethically opposed to its use and prevalance.
+
+\section{Ethical Considerations}
+
+Whilst this project does not raise any immediate ethical concerns, as a general-purpose graphics library, it has many applications -- some of which may require further ethical consideration, such as military usage or the generation of inappropriate images. This can be addressed through the use of a licensing agreement to ensure liability remains with the user.
+
+\section{Sustainability}
+
+This project provides an interface for GPU use -- any lack of optimisation in the tool may require increased computation and power consumption, which must be avoided to ensure a sustainable and usable graphics API.
 
 
 %% bibliography
