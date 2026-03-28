@@ -136,16 +136,16 @@ Metaprogramming is a method of manipulating code as a first-class value: code is
 Staging is a method in which the programmer identifies statically-known sections of a program and utilises metaprogramming to perform the computation ahead of runtime. The traditional example of two-stage metaprogramming and its utilisation is in redefining the \verb|power n x| function for calculating \(x^n\):
 
 \begin{minipage}{.5\textwidth}
-  \lstinputlisting[language=Haskell, label=lst:power, caption=Classical power function \autocite{willis_staged_2020}]{programs/Power.hs}
+  \lstinputlisting[language=Haskell, label=lst:power, caption=Classical power function \autocite{willis_staged_2020}]{programs/metaprogramming/Power.hs}
 \end{minipage}
 ~
 \begin{minipage}{.5\textwidth}
-  \lstinputlisting[language=Haskell, label=lst:staged-power, caption=Staged power function \autocite{willis_staged_2020}]{programs/StagedPower.hs}
+  \lstinputlisting[language=Haskell, label=lst:staged-power, caption=Staged power function \autocite{willis_staged_2020}]{programs/metaprogramming/StagedPower.hs}
 \end{minipage}
 
 As such, when executed, the staged power function evaluates to the following code:
 
-\lstinputlisting[language=Haskell, label=lst:eval-staged-power, caption=Evaluated staged power function \autocite{willis_staged_2020}]{programs/EvalStagedPower.hs}
+\lstinputlisting[language=Haskell, label=lst:eval-staged-power, caption=Evaluated staged power function \autocite{willis_staged_2020}]{programs/metaprogramming/EvalStagedPower.hs}
 
 Multiple stages arise when higher-level abstractions cannot be eliminated using a single application of the quote and splice primitives; to expose larger degrees of static information, a program can be converted into a syntactic representation at an initial stage. At later stages, this representation is evaluated using the wider syntactic context to infer greater meaning. \autocite{pickering_multi-stage_2019}
 
@@ -166,7 +166,7 @@ The classical model of a graphics render pipeline consists of three major stages
 % TODO: check copyright 
 \begin{figure}[h] 
   \centering
-  \includegraphics[width = 0.4\hsize]{./figures/render-pipeline.png}
+  \includegraphics[width = 0.4\hsize]{./figures/graphics/render-pipeline.png}
   \caption{The graphics render pipeline divided into major stages \autocite{tomas_akenine-moller_real-time_2008}}
   \label{fig:render-pipeline}
 \end{figure}
@@ -189,7 +189,7 @@ The geometry stage performs the majority of per-polygon and per-vertex operation
 % TODO: check copyright 
 \begin{figure}[h]
   \centering
-  \includegraphics[width = 0.4\hsize]{./figures/geometry-stage.png}
+  \includegraphics[width = 0.4\hsize]{./figures/graphics/geometry-stage.png}
   \caption{The geometry stage divided into sub-stages \autocite{tomas_akenine-moller_real-time_2008}}
   \label{fig:geometry-stage}
 \end{figure}
@@ -205,7 +205,7 @@ To perform simpler clipping and projection operations at later stages within the
 % TODO: check copyright 
 \begin{figure}[h] 
   \centering
-  \includegraphics[width = 0.4\hsize]{./figures/view-transformation.png}
+  \includegraphics[width = 0.4\hsize]{./figures/graphics/view-transformation.png}
   \caption{The view transformation \autocite{tomas_akenine-moller_real-time_2008}}
   \label{fig:view-transformation}
 \end{figure}
@@ -227,7 +227,7 @@ The \textbf{perspective projection} is more complex, transforming the camera spa
 % TODO: check copyright 
 \begin{figure}[h] 
   \centering
-  \includegraphics[width = 0.4\hsize]{./figures/projection.png}
+  \includegraphics[width = 0.4\hsize]{./figures/graphics/projection.png}
   \caption{Orthographic projection (left) compared with perspective projection (right) \autocite{tomas_akenine-moller_real-time_2008}}
   \label{fig:projection}
 \end{figure}
@@ -242,7 +242,7 @@ For performance, only primitives that are within the visible volume defined by t
 % TODO: check copyright 
 \begin{figure}[h] 
   \centering
-  \includegraphics[width = 0.4\hsize]{./figures/clipping.png}
+  \includegraphics[width = 0.4\hsize]{./figures/graphics/clipping.png}
   \caption{The clipping operation performed on a sample scene \autocite{tomas_akenine-moller_real-time_2008}}
   \label{fig:clipping}
 \end{figure}
@@ -263,7 +263,7 @@ The rasteriser samples continuous primitives into discrete pixels on the screen.
 % TODO: check copyright
 \begin{figure}[h]
   \centering
-  \includegraphics[width = 0.4\hsize]{./figures/rasterise-stage.png}
+  \includegraphics[width = 0.4\hsize]{./figures/graphics/rasterise-stage.png}
   \caption{The rasterise stage divided into sub-stages \autocite{tomas_akenine-moller_real-time_2008}}
   \label{fig:rasterise-stage}
 \end{figure}
@@ -340,7 +340,7 @@ Triangles are the only polygons OpenGL supports; they are the simplest possible 
 % TODO: check copyright
 \begin{figure}[h]
   \centering
-  \includegraphics[width = 0.4\hsize]{./figures/primitives-triangle.png}
+  \includegraphics[width = 0.4\hsize]{./figures/opengl/primitives-triangle.png}
   \caption{(a) Triangle strip. (b) Triangle fan. (c) Independent triangles 
   \autocite{mark_segal_opengl_2022}}
   \label{fig:primitives-triangles}
@@ -372,11 +372,11 @@ GLAD is an alternative to GLEW which generates the required loader files from th
 
 The following program is a program using OpenGL to render the classical \textit{'Hello Triangle'} example scene in which a 2D triangle with Red, Green and Blue vertices is shaded using values interpolated by the rasteriser. \autocite{anton_gerdelan_hello_2025}
 
-\lstinputlisting[language=C++, label=lst:opengl-hello-triangle, caption=OpenGL \textit{'Hello Triangle'} Program\autocite{anton_gerdelan_hello_2025}]{programs/OpenGL-Triangle.cpp}
+\lstinputlisting[language=C++, label=lst:opengl-hello-triangle, caption=OpenGL \textit{'Hello Triangle'} Program\autocite{anton_gerdelan_hello_2025}]{programs/graphics/TriangleOpenGL.cpp}
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width = 0.4\hsize]{./figures/opengl-triangle.png}
+  \includegraphics[width = 0.4\hsize]{./figures/opengl/opengl-triangle.png}
   \caption{Output of the OpenGL \textit{'Hello Triangle'} Program}
   \label{fig:opengl-hello-triangle}
 \end{figure}
@@ -424,11 +424,11 @@ In contrast to the above imperative examples, the RenderMan Interface Specificat
 GPipe provides a strong example of a functional graphics library reducing the complexity of OpenGL and its rendering mechanisms. Below is the \textit{'Hello Triangle'} example rendered using the GPipe library:
 
 \lstinputlisting[language=Haskell, caption=GPipe \textit{'Hello Triangle'} Program
-  \autocite{tobias_bexelius_gpipe_2015}]{programs/GPipe-Triangle.hs}
+  \autocite{tobias_bexelius_gpipe_2015}]{programs/graphics/TriangleGPipe.hs}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width = 0.4\hsize]{./figures/gpipe-triangle.png}
+  \includegraphics[width = 0.4\hsize]{./figures/gpipe/gpipe-triangle.png}
   \caption{Output of the GPipe \textit{'Hello Triangle'} Program}
   \label{fig:gpipe-hello-triangle}
 \end{figure}
